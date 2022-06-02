@@ -2,6 +2,8 @@ package com.example.zuccapp2;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
@@ -14,7 +16,10 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String ENDPOINT_URL = "http://merovingian.cs.washington.edu:1104";
     private static final int CONNECT_TIMEOUT = 10000;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,9 +58,13 @@ public class MainActivity extends AppCompatActivity {
 
         isListening = false;
 
+        ConstraintLayout layout = findViewById(R.id.mainPage);
+
+        getInventory();
+        makeList(layout, new String[]{"lmfao", "kokok", "gbjjh"});
+
         micButton = (ImageView) findViewById(R.id.button);
         textView = (TextView) findViewById(R.id.text);
-        getInventory();
 
         intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -179,6 +189,33 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void makeList(ConstraintLayout layout, String[] items) {
+        ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.MATCH_CONSTRAINT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
+        int i = 0;
+        for (String s : items) {
+            TextView tv = new TextView(getApplicationContext());
+            tv.setText(s);
+            tv.setGravity(Gravity.CENTER);
+            tv.setLayoutParams(params);
+            tv.setId(i + 1);
+
+            ConstraintSet constraintSet = new ConstraintSet();
+            constraintSet.clone(layout);
+            constraintSet.connect(tv.getId(), ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START, 16);
+            constraintSet.connect(tv.getId(), ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END, 16);
+            if (i == 0) {
+                constraintSet.connect(tv.getId(), ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP, 16);
+            } else {
+                constraintSet.connect(tv.getId(), ConstraintSet.TOP,  i, ConstraintSet.BOTTOM, 16);
+            }
+            if (i++ == items.length - 1) {
+                constraintSet.connect(tv.getId(), ConstraintSet.BOTTOM, R.id.text, ConstraintSet.TOP, 16);
+            }
+            layout.addView(tv, params);
+            constraintSet.applyTo(layout);
         }
     }
 }
