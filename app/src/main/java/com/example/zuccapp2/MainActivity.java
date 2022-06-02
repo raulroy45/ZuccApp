@@ -21,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,10 +59,10 @@ public class MainActivity extends AppCompatActivity {
 
         isListening = false;
 
-        ConstraintLayout layout = findViewById(R.id.mainPage);
+        LinearLayout layout = findViewById(R.id.itemsLayout);
 
-        getInventory();
-        makeList(layout, new String[]{"lmfao", "kokok", "gbjjh"});
+        //getInventory();
+        makeList(layout, new String[]{"lmfao", "kokok"});
 
         micButton = (ImageView) findViewById(R.id.button);
         textView = (TextView) findViewById(R.id.text);
@@ -192,30 +193,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void makeList(ConstraintLayout layout, String[] items) {
-        ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.MATCH_CONSTRAINT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
+    public void makeList(LinearLayout layout, String[] items) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0,16,0,0);
         int i = 0;
         for (String s : items) {
             TextView tv = new TextView(getApplicationContext());
             tv.setText(s);
             tv.setGravity(Gravity.CENTER);
             tv.setLayoutParams(params);
+            tv.setTextSize(20);
             tv.setId(i + 1);
 
-            ConstraintSet constraintSet = new ConstraintSet();
-            constraintSet.clone(layout);
-            constraintSet.connect(tv.getId(), ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START, 16);
-            constraintSet.connect(tv.getId(), ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END, 16);
-            if (i == 0) {
-                constraintSet.connect(tv.getId(), ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP, 16);
-            } else {
-                constraintSet.connect(tv.getId(), ConstraintSet.TOP,  i, ConstraintSet.BOTTOM, 16);
-            }
-            if (i++ == items.length - 1) {
-                constraintSet.connect(tv.getId(), ConstraintSet.BOTTOM, R.id.text, ConstraintSet.TOP, 16);
-            }
             layout.addView(tv, params);
-            constraintSet.applyTo(layout);
         }
     }
 }
