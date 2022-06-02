@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ZuccApp2</string>
+    <string name="tap_mic_and_speak">Tap on the mic to talk to Zucc</string>
+</resources>
