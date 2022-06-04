@@ -9,6 +9,8 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -31,8 +33,10 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -43,10 +47,12 @@ public class MainActivity extends AppCompatActivity {
     public static final Integer RecordAudioRequestCode = 1;
     private boolean isListening;
     private TextView textView;
+    private int counter = 0;
+    private List<TextView> list;
     private ImageView micButton;
     private Intent intent;
     TextToSpeech tts;
-    private static final String ENDPOINT_URL = "http://merovingian.cs.washington.edu:1104";
+    private static final String ENDPOINT_URL = "https://www.merovingian.cs.washington.edu:1104/";
     private static final int CONNECT_TIMEOUT = 10000;
 
 
@@ -61,8 +67,9 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout layout = findViewById(R.id.itemsLayout);
 
-        //getInventory();
-        makeList(layout, new String[]{"lmfao", "kokok"});
+        getInventory();
+        makeList(layout, new String[]{"lmfao", "kokok", "hello"});
+        list.get(counter).setTextColor(Color.RED);
 
         micButton = (ImageView) findViewById(R.id.button);
         textView = (TextView) findViewById(R.id.text);
@@ -73,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN");
 
+        tts = new TextToSpeech(getApplicationContext(), i -> {});
+        tts.setLanguage(Locale.US);
         createSpeechRecognizer();
     }
 
@@ -112,15 +121,20 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResults(Bundle bundle) {
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                // textView.setText();
-                if (data.get(0).toLowerCase().contains("next")) {
+                textView.setText(data.get(0));
+                if (data.get(0).toLowerCase().equals("next")) {
                     // SEND AND HANDLE POST REQUEST
                     // START SPEAKING
                     // WHILE IS SPEAKING, WAIT IN LOOP
+                    tts.speak("placed item", TextToSpeech.QUEUE_FLUSH, null);
+                    list.get(counter).setTextColor(Color.GREEN);
+                    counter++;
+                    if (counter < list.size())
+                        list.get(counter).setTextColor(Color.RED);
                     // WHEN NOT SPEAKING, THEN CREATE NEW SPEECH RECOGNIZER
                 }
-//                createSpeechRecognizer();
-//                speechRecognizer.startListening(intent);
+                createSpeechRecognizer();
+                speechRecognizer.startListening(intent);
             }
 
             @Override
@@ -145,9 +159,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        tts = new TextToSpeech(getApplicationContext(), i -> {
-        });
-        tts.setLanguage(Locale.US);
     }
 
     private void checkPermission () {
@@ -170,24 +181,42 @@ public class MainActivity extends AppCompatActivity {
         // GET INVENTORY
         try {
             URL url = new URL(ENDPOINT_URL);
-            HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
-            try {
-                urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
-                urlConnection.connect();
-
-                // Fetch the data and collect the response body.
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-                StringBuilder result = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    result.append(line);
-                }
-                // process result based on type
-            } catch (Exception e) {
-                e.printStackTrace();
+            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+            if(conn.getResponseCode() == HttpsURLConnection.HTTP_OK){
+                // Do normal input or output stream reading
+                Toast.makeText(this, "Arre", Toast.LENGTH_SHORT).show();
             }
+            else {
+                Toast.makeText(this, "RIP", Toast.LENGTH_SHORT).show(); // See documentation for more info on response handling
+            }
+            try {
+                InputStream in = new BufferedInputStream(conn.getInputStream());
+
+            } catch (Exception e){
+                e.printStackTrace();
+                conn.disconnect();
+            }
+
+//            try {
+//                urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
+//                urlConnection.connect();
+//
+//                Toast.makeText(this, "Kuch Granted", Toast.LENGTH_SHORT).show();
+//                // Fetch the data and collect the response body.
+//                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+//                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+//
+//                StringBuilder result = new StringBuilder();
+//                String line;
+//                while ((line = reader.readLine()) != null) {
+//                    result.append(line);
+//                }
+//                // process result based on type
+//                Toast.makeText(this, result.toString(), Toast.LENGTH_SHORT).show();
+//                urlConnection.disconnect();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -197,6 +226,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0,16,0,0);
         int i = 0;
+        list = new ArrayList<>();
         for (String s : items) {
             TextView tv = new TextView(getApplicationContext());
             tv.setText(s);
@@ -206,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
             tv.setId(i + 1);
 
             layout.addView(tv, params);
+            list.add(tv);
         }
     }
 }
