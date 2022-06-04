@@ -31,6 +31,7 @@ import org.w3c.dom.Text;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -39,6 +40,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttp;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -54,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     TextToSpeech tts;
     private static final String ENDPOINT_URL = "https://www.merovingian.cs.washington.edu:1104/";
     private static final int CONNECT_TIMEOUT = 10000;
+    private final OkHttpClient client = new OkHttpClient();
 
 
     @Override
@@ -179,23 +189,38 @@ public class MainActivity extends AppCompatActivity {
 
     private void getInventory() {
         // GET INVENTORY
-        try {
-            URL url = new URL(ENDPOINT_URL);
-            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-            if(conn.getResponseCode() == HttpsURLConnection.HTTP_OK){
-                // Do normal input or output stream reading
-                Toast.makeText(this, "Arre", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                Toast.makeText(this, "RIP", Toast.LENGTH_SHORT).show(); // See documentation for more info on response handling
-            }
-            try {
-                InputStream in = new BufferedInputStream(conn.getInputStream());
-
-            } catch (Exception e){
+        Request request = new Request.Builder().url(ENDPOINT_URL).build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 e.printStackTrace();
-                conn.disconnect();
             }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    ResponseBody responseBody = response.body();
+                    Toast.makeText(getApplicationContext(), responseBody.string(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+//        try {
+//            URL url = new URL(ENDPOINT_URL);
+//            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+//            if(conn.getResponseCode() == HttpsURLConnection.HTTP_OK){
+//                // Do normal input or output stream reading
+//                Toast.makeText(this, "Arre", Toast.LENGTH_SHORT).show();
+//            }
+//            else {
+//                Toast.makeText(this, "RIP", Toast.LENGTH_SHORT).show(); // See documentation for more info on response handling
+//            }
+//            try {
+//                InputStream in = new BufferedInputStream(conn.getInputStream());
+//
+//            } catch (Exception e){
+//                e.printStackTrace();
+//                conn.disconnect();
+//            }
 
 //            try {
 //                urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
@@ -217,9 +242,9 @@ public class MainActivity extends AppCompatActivity {
 //            } catch (Exception e) {
 //                e.printStackTrace();
 //            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     public void makeList(LinearLayout layout, String[] items) {
