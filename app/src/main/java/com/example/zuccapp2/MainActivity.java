@@ -44,9 +44,11 @@ import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.FormBody;
 import okhttp3.OkHttp;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
@@ -65,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String ENDPOINT_URL = "http://merovingian.cs.washington.edu:1104/";
     private static final int CONNECT_TIMEOUT = 10000;
     private final OkHttpClient client = new OkHttpClient();
+    private Boolean okToPlace;
 
 
     @Override
@@ -75,12 +78,14 @@ public class MainActivity extends AppCompatActivity {
         checkPermission();
 
         isListening = false;
+        getInventory();
+        okToPlace = true;
 
 //        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 //
 //        StrictMode.setThreadPolicy(policy);
 //        makeList(layout, getInventory());
-        list.get(counter).setTextColor(Color.RED);
+//        list.get(counter).setTextColor(Color.RED);
 
         micButton = (ImageView) findViewById(R.id.button);
         textView = (TextView) findViewById(R.id.text);
@@ -137,11 +142,20 @@ public class MainActivity extends AppCompatActivity {
                     // SEND AND HANDLE POST REQUEST
                     // START SPEAKING
                     // WHILE IS SPEAKING, WAIT IN LOOP
-                    tts.speak("placed item", TextToSpeech.QUEUE_FLUSH, null);
+                    okToPlace = false;
+                    sendPOSTRequest(list.get(counter).toString()); // will this work?
                     list.get(counter).setTextColor(Color.GREEN);
                     counter++;
                     if (counter < list.size())
                         list.get(counter).setTextColor(Color.RED);
+                    while (!okToPlace) {
+                        try {
+                            okToPlace.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    tts.speak("place item " + list.get(counter), TextToSpeech.QUEUE_FLUSH, null);
                     // WHEN NOT SPEAKING, THEN CREATE NEW SPEECH RECOGNIZER
                 }
                 createSpeechRecognizer();
@@ -188,9 +202,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void sendPOSTRequest(String object) {
+        RequestBody formBody = new FormBody.Builder()
+                .add("put_object", object)
+                .build();
+        Request request = new Request.Builder()
+                .url(ENDPOINT_URL) // change this to POST url
+                .post(formBody)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                okToPlace = true;
+                okToPlace.notify();
+            }
+        });
+    }
+
     private void getInventory() {
         // GET INVENTORY
-        Request request = new Request.Builder().url(ENDPOINT_URL).build();
+        Request request = new Request.Builder()
+                .url(ENDPOINT_URL)
+                .build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -205,6 +243,7 @@ public class MainActivity extends AppCompatActivity {
                     assert responseBody != null;
                     String body = responseBody.string();
                     makeList(layout, body.split(","));
+                    list.get(counter).setTextColor(Color.RED);
                     Toast.makeText(getApplicationContext(), responseBody.string(), Toast.LENGTH_SHORT).show();
                 }
             }
