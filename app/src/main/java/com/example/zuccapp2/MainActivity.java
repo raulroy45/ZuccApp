@@ -13,6 +13,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView micButton;
     private Intent intent;
     TextToSpeech tts;
-    private static final String ENDPOINT_URL = "https://www.merovingian.cs.washington.edu:1104/";
+    private static final String ENDPOINT_URL = "http://merovingian.cs.washington.edu:1104/";
     private static final int CONNECT_TIMEOUT = 10000;
     private final OkHttpClient client = new OkHttpClient();
 
@@ -77,8 +78,10 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayout layout = findViewById(R.id.itemsLayout);
 
-        getInventory();
-        makeList(layout, new String[]{"lmfao", "kokok", "hello"});
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+
+        StrictMode.setThreadPolicy(policy);
+        makeList(layout, getInventory());
         list.get(counter).setTextColor(Color.RED);
 
         micButton = (ImageView) findViewById(R.id.button);
@@ -206,29 +209,11 @@ public class MainActivity extends AppCompatActivity {
         });
 //        try {
 //            URL url = new URL(ENDPOINT_URL);
-//            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-//            if(conn.getResponseCode() == HttpsURLConnection.HTTP_OK){
-//                // Do normal input or output stream reading
-//                Toast.makeText(this, "Arre", Toast.LENGTH_SHORT).show();
-//            }
-//            else {
-//                Toast.makeText(this, "RIP", Toast.LENGTH_SHORT).show(); // See documentation for more info on response handling
-//            }
-//            try {
-//                InputStream in = new BufferedInputStream(conn.getInputStream());
+//            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 //
-//            } catch (Exception e){
-//                e.printStackTrace();
-//                conn.disconnect();
-//            }
-
 //            try {
-//                urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
-//                urlConnection.connect();
-//
-//                Toast.makeText(this, "Kuch Granted", Toast.LENGTH_SHORT).show();
 //                // Fetch the data and collect the response body.
-//                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+//                InputStream in = new BufferedInputStream(conn.getInputStream());
 //                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 //
 //                StringBuilder result = new StringBuilder();
@@ -237,14 +222,15 @@ public class MainActivity extends AppCompatActivity {
 //                    result.append(line);
 //                }
 //                // process result based on type
-//                Toast.makeText(this, result.toString(), Toast.LENGTH_SHORT).show();
-//                urlConnection.disconnect();
+//                conn.disconnect();
+//                return result.toString().split(",");
 //            } catch (Exception e) {
 //                e.printStackTrace();
 //            }
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }
+//        return
     }
 
     public void makeList(LinearLayout layout, String[] items) {
@@ -264,4 +250,5 @@ public class MainActivity extends AppCompatActivity {
             list.add(tv);
         }
     }
+
 }
