@@ -76,12 +76,10 @@ public class MainActivity extends AppCompatActivity {
 
         isListening = false;
 
-        LinearLayout layout = findViewById(R.id.itemsLayout);
-
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-
-        StrictMode.setThreadPolicy(policy);
-        makeList(layout, getInventory());
+//        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+//
+//        StrictMode.setThreadPolicy(policy);
+//        makeList(layout, getInventory());
         list.get(counter).setTextColor(Color.RED);
 
         micButton = (ImageView) findViewById(R.id.button);
@@ -202,7 +200,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful()) {
+                    LinearLayout layout = findViewById(R.id.itemsLayout);
                     ResponseBody responseBody = response.body();
+                    assert responseBody != null;
+                    String body = responseBody.string();
+                    makeList(layout, body.split(","));
                     Toast.makeText(getApplicationContext(), responseBody.string(), Toast.LENGTH_SHORT).show();
                 }
             }
